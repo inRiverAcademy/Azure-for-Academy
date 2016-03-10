@@ -1,0 +1,269 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Region": {
+      "type": "String",
+      "defaultValue": "westeu",
+      "allowedValues": [
+        "westeu",
+        "northeu",
+        "westus",
+        "eastus",
+        "southus"
+      ],
+      "metadata": {
+        "description": "Where would you like to place the servers"
+      }
+    },
+    "ServerName": {
+      "type": "String",
+      "defaultValue": "nameofvm",
+      "metadata": {
+        "description": "Name of the servers maximum of 13 letters all lowercase"
+      }
+    },
+    "VMCount": {
+      "type": "int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
+    "Username": {
+      "type": "string",
+      "metadata": {
+        "description": "Local Administrator username, can not be Admin or Administrator"
+      }
+    },
+    "Password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the local Administrator Must be at least 8 characters and one have at least one capital letter, one number and one special character"
+      }
+    },
+    "Image": {
+      "type": "string",
+      "defaultValue": "Win2012",
+      "allowedValues": [
+        "Win2012"
+      ],
+      "metadata": {
+        "description": "The Windows Image This will pick a fully patched image of this given Windows version"
+      }
+    },
+    "Size": {
+      "type": "string",
+      "defaultValue": "Standard_D11_v2",
+      "allowedValues": [
+        "Standard_D11_v2"
+      ],
+      "metadata": {
+        "description": "The size and type for the VM. For sizes see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-size-specs/"
+      }
+    }
+  },
+  "variables": {
+    "Location": "[resourceGroup().location]",
+    "CustName": "academy",
+    "BaseName": "[resourceGroup().name]",
+    "NETAddress": "10.0.0.0/16",
+    "SRVSubnet": "10.0.0.0/24",
+    "NETid": "[concat(variables('BaseName'),variables('NETDef'))]",
+    "NSGid": "[concat(variables('BaseName'),variables('NSGDef'))]",
+    "PIPid": "[concat(parameters('ServerName'),variables('PIPDef'))]",
+    "VNETid": "[resourceId('Microsoft.Network/virtualNetworks',variables('NETid'))]",
+    "SUBRef": "[concat(variables('VNETid'),'/subnets/',variables('SUBid'))]",
+    "SUBid": "[concat(variables('BaseName'),variables('SUBDef'))]",
+    "NICid": "[concat(parameters('ServerName'),variables('NICDef'))]",
+    "SAid": "[concat(variables('CustName'),parameters('Region'),variables('SADef'))]",
+    "SAType": "Standard_LRS",
+    "DeployImage": "academy-base2201611784249",
+    "DeployOSVHDname": "[concat('http://',variables('SAid'),'.blob.core.windows.net/','vhds','/',variables('DeployImage'),'.vhd')]",
+    "VHDname": "[concat('http://',variables('SAid'),'.blob.core.windows.net/','vms','/')]",
+    "OSdiskname": "[concat(parameters('ServerName'),'osdisk')]",
+    "PIPType": "Dynamic",
+    "VMDef": "vm",
+    "SADef": "sa",
+    "NETDef": "net",
+    "SUBDef": "sub",
+    "NICDef": "nic",
+    "PIPDef": "pip",
+    "NSGDef": "nsg"
+  },
+  "resources": [
+  {
+    "apiVersion": "2015-05-01-preview",
+    "type": "Microsoft.Network/virtualNetworks",
+    "name": "[concat(variables('BaseName'),variables('NETDef'))]",
+    "location": "[variables('Location')]",
+    "dependsOn": [
+      "[concat('Microsoft.Network/networkSecurityGroups/', variables('NSGid'))]"
+    ],
+    "properties": {
+      "addressSpace": {
+        "addressPrefixes": [
+          "[variables('NETaddress')]"
+        ]
+      },
+      "subnets": [
+        {
+          "name": "[concat(variables('BaseName'),variables('SUBDef'))]",
+          "properties": {
+            "addressPrefix": "[variables('SRVSubnet')]",
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSGid'))]"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "apiVersion": "2015-05-01-preview",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "name": "[variables('NSGid')]",
+    "location": "[variables('Location')]",
+    "properties": {
+      "securityRules": [
+        {
+            "name": "HTTP_80",
+            "properties": {
+              "description": "HTTP 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+          "name": "HTTP_8080",
+          "properties": {
+            "description": "HTTP 8080",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "8080",
+            "sourceAddressPrefix": "Internet",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 200,
+            "direction": "Inbound"
+          }
+        },
+        {
+          "name": "RDP_ALL",
+          "properties": {
+            "description": "Port 3389",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "Internet",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 300,
+            "direction": "Inbound"
+          }
+        }
+      ]
+    }
+  },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('ServerName'),variables('PIPDef'),copyIndex())]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('Location')]",
+      "copy": {
+        "name": "publicIPLoop",
+        "count": "[parameters('VMCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('PIPType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('ServerName'),copyIndex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('ServerName'),variables('NICDef'),copyIndex())]",
+      "location": "[variables('Location')]",
+      "copy": {
+       "name": "nicLoop",
+       "count": "[parameters('VMCount')]"
+     },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('PIPid'),copyIndex())]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('NETid'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('PIPid'),copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('SUBRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('ServerName'),copyIndex())]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('Location')]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('VMCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('NICid'),copyindex()))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('Size')]"
+        },
+        "osProfile": {
+          "computername": "[concat(parameters('ServerName'),copyIndex())]",
+          "adminUsername": "[parameters('Username')]",
+          "adminPassword": "[parameters('Password')]",
+          "windowsConfiguration": {
+        "provisionVMAgent":true,
+        "enableAutomaticUpdates":false
+      }
+    },
+        "storageProfile": {
+          "osDisk": {
+            "name": "[variables('OSdiskname')]",
+            "osType": "windows",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "[variables('DeployOSVHDname')]"
+            },
+            "vhd": {
+              "uri": "[concat(variables('VHDname'),variables('OSdiskname'),copyIndex(),'.vhd')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('NICid'),copyindex()))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
