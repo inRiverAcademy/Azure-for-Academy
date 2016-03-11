@@ -4,7 +4,7 @@
   "parameters": {
     "Region": {
       "type": "String",
-      "defaultValue": "westeu",
+      "defaultValue": "northeu",
       "allowedValues": [
         "westeu",
         "northeu",
@@ -25,7 +25,7 @@
     },
     "VMCount": {
       "type": "int",
-      "defaultValue": 5,
+      "defaultValue": 2,
       "metadata": {
         "description": "Number of VMs to deploy"
       }
