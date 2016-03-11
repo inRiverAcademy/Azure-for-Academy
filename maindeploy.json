@@ -78,7 +78,7 @@
     "NICid": "[concat(parameters('ServerName'),variables('NICDef'))]",
     "SAid": "[concat(variables('CustName'),parameters('Region'),variables('SADef'))]",
     "SAType": "Standard_LRS",
-    "DeployImage": "academy-base2201611784249",
+    "DeployImage": "baseimageosdisk0",
     "DeployOSVHDname": "[concat('http://',variables('SAid'),'.blob.core.windows.net/','vhds','/',variables('DeployImage'),'.vhd')]",
     "VHDname": "[concat('http://',variables('SAid'),'.blob.core.windows.net/','vms','/')]",
     "OSdiskname": "[concat(parameters('ServerName'),'osdisk')]",
