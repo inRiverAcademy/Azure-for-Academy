@@ -167,8 +167,8 @@
             "priority": 300,
             "direction": "Inbound"
           }
-        }
-                {
+        },
+        {
           "name": "SQL",
           "properties": {
             "description": "Port 1433",
