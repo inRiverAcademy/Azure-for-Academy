@@ -168,6 +168,20 @@
             "direction": "Inbound"
           }
         }
+                {
+          "name": "SQL",
+          "properties": {
+            "description": "Port 1433",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "1433",
+            "sourceAddressPrefix": "Internet",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 400,
+            "direction": "Inbound"
+          }
+        }
       ]
     }
   },
