@@ -16,7 +16,7 @@
     },
     "ServerName": {
       "type": "String",
-      "defaultValue": "nameofvm Add same name plus "RG" in Resource Group on the left side",
+      "defaultValue": "nameofvm Add same name plus RG in Resource Group on the left side",
       "metadata": {
         "description": "Name of the servers maximum of 13 letters all lowercase"
       }
