@@ -4,13 +4,11 @@
   "parameters": {
     "Region": {
       "type": "String",
-      "defaultValue": "northeu",
+      "defaultValue": "westeu",
       "allowedValues": [
         "westeu",
         "northeu",
-        "westus",
         "eastus",
-        "southus"
       ],
       "metadata": {
         "description": "Where would you like to place the servers"
