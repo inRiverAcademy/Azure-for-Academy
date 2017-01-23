@@ -42,9 +42,9 @@
     },
     "Image": {
       "type": "string",
-      "defaultValue": "Windows Server 2012R2",
+      "defaultValue": "Windows Server 2016",
       "allowedValues": [
-        "Windows Server 2012R2"
+        "Windows Server 2016"
       ],
       "metadata": {
         "description": "The Windows Image This will pick a fully patched image of this given Windows version"
